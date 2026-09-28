@@ -2,9 +2,140 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arandu</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --border: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --highlight: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 280px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent);
+      border-radius: 50%;
+    }
+
+    .grid-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--highlight);
+      line-height: 1.2;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
-  <h1>Arandu</h1>
+  <header>
+    <div class="brand">
+      <span>🌿</span>
+      <h1>Arandu</h1>
+    </div>
+    <span class="badge-status">
+      <span class="dot"></span>
+      Ativo
+    </span>
+  </header>
+
+  <section class="grid-stats">
+    <div class="card">
+      <span id="saved-time" class="metric-value">0 min</span>
+      <span class="metric-label">Tempo Ganho</span>
+    </div>
+    <div class="card">
+      <span id="blocked-count" class="metric-value">0</span>
+      <span class="metric-label">Bloqueios</span>
+    </div>
+  </section>
+
+  <footer>
+    <span>Modo Local-First • Zero Rastreio</span>
+  </footer>
+
+  <script type="module" src="./popup.ts"></script>
 </body>
 </html>
