@@ -1,0 +1,20 @@
+{
+  "platform": "youtube",
+  "domain": "youtube.com",
+  "rules": [
+    {
+      "id": "yt-shorts-shelf",
+      "name": "Carrossel de Shorts no feed principal",
+      "selector": "ytd-rich-shelf-renderer[is-shorts], ytd-reel-shelf-renderer",
+      "weightSeconds": 45,
+      "enabled": true
+    },
+    {
+      "id": "yt-shorts-menu-item",
+      "name": "Botão Shorts no menu de navegação lateral",
+      "selector": "ytd-guide-entry-renderer:has(a[title='Shorts']), ytd-mini-guide-entry-renderer[aria-label='Shorts']",
+      "weightSeconds": 15,
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Arandu",
+  "version": "0.1.0",
+  "description": "Restauração da agência cognitiva e mensuração do tempo recuperado.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.instagram.com/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "Arandu"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.instagram.com/*"
+      ],
+      "js": ["content/engine.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
