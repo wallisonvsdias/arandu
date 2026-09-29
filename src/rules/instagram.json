@@ -3,25 +3,52 @@
   "domain": "instagram.com",
   "rules": [
     {
-      "id": "ig-reels-nav",
-      "name": "Botão Reels no menu principal de navegação",
-      "selector": "a[href*='/reels/'], div:has(> a[href*='/reels/'])",
+      "id": "ig-stories",
+      "name": "Barra de Stories",
+      "description": "Remove a bandeja de Stories do topo do feed da página inicial",
+      "selector": "div[role='menu']:has(canvas), div:has(> div > ul canvas), div:has(> div > div > div > ul:has(canvas))",
+      "weightSeconds": 40,
+      "enabled": true
+    },
+    {
+      "id": "ig-reels",
+      "name": "Reels (Feed e Menu)",
+      "description": "Oculta botões de Reels da navegação e carrosséis inseridos no feed",
+      "selector": "a[href*='/reels/'], div:has(> a[href*='/reels/']), div:has(> div > a[href*='/reels/'])",
+      "weightSeconds": 45,
+      "enabled": true
+    },
+    {
+      "id": "ig-explore-grid",
+      "name": "Grade do Explorar (Mantém a Busca)",
+      "description": "Oculta a grade infinita de fotos/vídeos da página Explorar sem afetar o campo de busca",
+      "selector": "main[role='main'] div[style*='flex-direction: column'] > div:has(a[href^='/p/'], a[href^='/reel/']), main[role='main'] > div > div:has(a[href^='/p/'])",
+      "weightSeconds": 35,
+      "enabled": true
+    },
+    {
+      "id": "ig-sponsored",
+      "name": "Publicações Patrocinadas (Anúncios)",
+      "description": "Remove publicações de anunciantes e posts pagos do feed",
+      "selector": "article:has(a[href*='/about/ads/']), article:has(a[href*='/ads/'])",
       "weightSeconds": 20,
       "enabled": true
     },
     {
-      "id": "ig-explore-nav",
-      "name": "Aba Explorar no menu lateral",
-      "selector": "a[href*='/explore/'], div:has(> a[href*='/explore/'])",
+      "id": "ig-suggested-posts",
+      "name": "Sugestões de Perfis Desconhecidos",
+      "description": "Oculta carrosséis de perfis recomendados e posts 'Sugerido para você'",
+      "selector": "div:has(> div > div > a[href*='/explore/people/']), div:has(> div > a[href*='/explore/people/']), article:has(a[href*='/explore/locations/'])",
       "weightSeconds": 30,
       "enabled": true
     },
     {
-      "id": "ig-feed-reels-tray",
-      "name": "Carrossel de Reels embutido no feed principal",
-      "selector": "div:has(> div > a[href*='/reels/'])",
-      "weightSeconds": 45,
-      "enabled": true
+      "id": "ig-direct-notes",
+      "name": "Notas nas Mensagens Diretas",
+      "description": "Remove as bolhas de notas rápidas no topo da caixa de entrada do Direct",
+      "selector": "div[role='main'] div:has(> div > button[aria-label*='Note'], button[aria-label*='Nota']), div[role='main'] div:has(> div > div > button[aria-label*='Note'], div:has(> div > div > button[aria-label*='Nota']))",
+      "weightSeconds": 15,
+      "enabled": false
     }
   ]
 }

@@ -133,28 +133,51 @@ if (currentConfig) {
   tracker.start();
 }
 
-// Intercepta e converte URLs do Shorts para o player convencional ou tela inicial
-function interceptShortsNavigation(): void {
-  if (!window.location.hostname.includes('youtube.com')) return;
-
+// Intercepta URLs do YouTube Shorts e Instagram Reels
+function interceptDistractionUrls(): void {
+  const hostname = window.location.hostname;
   const path = window.location.pathname;
 
-  if (path.startsWith('/shorts/')) {
-    const videoId = path.split('/shorts/')[1]?.split(/[?&#]/)[0];
-    if (videoId) {
-      // Redireciona para o player tradicional de vídeo (elimina a rolagem infinita)
-      window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
-    } else {
+  // 1. YouTube Shorts
+  if (hostname.includes('youtube.com')) {
+    if (path.startsWith('/shorts/')) {
+      const videoId = path.split('/shorts/')[1]?.split(/[?&#]/)[0];
+      if (videoId) {
+        window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
+      } else {
+        window.location.replace('https://www.youtube.com/');
+      }
+    } else if (path === '/shorts' || path === '/shorts/') {
       window.location.replace('https://www.youtube.com/');
     }
-  } else if (path === '/shorts' || path === '/shorts/') {
-    window.location.replace('https://www.youtube.com/');
+  }
+
+  // 2. Instagram Reels (loop infinito)
+  if (hostname.includes('instagram.com')) {
+    if (path.startsWith('/reels/')) {
+      window.location.replace('https://www.instagram.com/');
+    }
   }
 }
 
-// Executa na carga inicial imediata (document_start)
-interceptShortsNavigation();
+// Monkeypatch do history.pushState para SPAs sem recarregamento
+function listenSpaNavigation(callback: () => void): void {
+  const originalPushState = history.pushState;
+  history.pushState = function (...args) {
+    originalPushState.apply(this, args);
+    callback();
+  };
 
-// Escuta a navegação interna assíncrona do próprio YouTube (SPA)
-window.addEventListener('yt-navigate-finish', interceptShortsNavigation);
-window.addEventListener('popstate', interceptShortsNavigation);
+  const originalReplaceState = history.replaceState;
+  history.replaceState = function (...args) {
+    originalReplaceState.apply(this, args);
+    callback();
+  };
+
+  window.addEventListener('popstate', callback);
+  window.addEventListener('yt-navigate-finish', callback);
+}
+
+// Execução imediata
+interceptDistractionUrls();
+listenSpaNavigation(interceptDistractionUrls);
