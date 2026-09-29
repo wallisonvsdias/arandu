@@ -80,7 +80,7 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 12px 10px;
+      padding: 12px 8px;
       text-align: center;
     }
 
@@ -90,14 +90,27 @@
       color: var(--highlight);
       line-height: 1.2;
       display: block;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
 
     .metric-label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
+    }
+
+    .info-box {
+      background-color: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     footer {
@@ -123,14 +136,19 @@
 
   <section class="grid-stats">
     <div class="card">
-      <span id="saved-time" class="metric-value">0 min</span>
-      <span class="metric-label">Tempo Ganho</span>
+      <span id="active-today" class="metric-value">0 min</span>
+      <span class="metric-label">Uso Ativo Hoje</span>
     </div>
     <div class="card">
       <span id="blocked-count" class="metric-value">0</span>
-      <span class="metric-label">Bloqueios</span>
+      <span class="metric-label">Gatilhos Barrados</span>
     </div>
   </section>
+
+  <div class="info-box">
+    <span>🛡️</span>
+    <span>Sessão intencional sem feeds predatórios.</span>
+  </div>
 
   <footer>
     <span>Modo Local-First • Zero Rastreio</span>
