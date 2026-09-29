@@ -1,0 +1,27 @@
+{
+  "platform": "instagram",
+  "domain": "instagram.com",
+  "rules": [
+    {
+      "id": "ig-reels-nav",
+      "name": "Botão Reels no menu principal de navegação",
+      "selector": "a[href*='/reels/'], div:has(> a[href*='/reels/'])",
+      "weightSeconds": 20,
+      "enabled": true
+    },
+    {
+      "id": "ig-explore-nav",
+      "name": "Aba Explorar no menu lateral",
+      "selector": "a[href*='/explore/'], div:has(> a[href*='/explore/'])",
+      "weightSeconds": 30,
+      "enabled": true
+    },
+    {
+      "id": "ig-feed-reels-tray",
+      "name": "Carrossel de Reels embutido no feed principal",
+      "selector": "div:has(> div > a[href*='/reels/'])",
+      "weightSeconds": 45,
+      "enabled": true
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import { Rule, PlatformConfig } from '../types/rule';
 import youtubeData from '../rules/youtube.json';
 import { ActiveTabTracker } from './tracker';
+import instagramData from '../rules/instagram.json';
+
 
 // Inicia o rastreador apenas se estiver no YouTube ou Instagram
 const hostname = window.location.hostname;
@@ -19,6 +21,7 @@ if (targetDomain) {
 
 const configs: Record<string, PlatformConfig> = {
   'youtube.com': youtubeData as PlatformConfig,
+  'instagram.com': instagramData as PlatformConfig,
 };
 
 // Determina as regras ativas de acordo com o domínio corrente
