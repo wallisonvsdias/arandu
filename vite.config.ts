@@ -8,6 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'src/popup/index.html'),
+        dashboard: resolve(__dirname, 'src/dashboard/index.html'),
         engine: resolve(__dirname, 'src/content/engine.ts'),
       },
       output: {
