@@ -3,69 +3,67 @@ import youtubeData from '../rules/youtube.json';
 import instagramData from '../rules/instagram.json';
 import { ActiveTabTracker } from './tracker';
 
-// Inicia o rastreador de presença ativa para domínios suportados
-const hostname = window.location.hostname;
-let targetDomain = '';
-
-if (hostname.includes('youtube.com')) {
-  targetDomain = 'youtube.com';
-} else if (hostname.includes('instagram.com')) {
-  targetDomain = 'instagram.com';
-}
-
-if (targetDomain) {
-  const tracker = new ActiveTabTracker(targetDomain);
-  tracker.start();
-}
-
 const configs: Record<string, PlatformConfig> = {
   'youtube.com': youtubeData as PlatformConfig,
   'instagram.com': instagramData as PlatformConfig,
 };
 
-// Determina as regras ativas de acordo com o domínio corrente
-function getActiveRules(): Rule[] {
+function isContextValid(): boolean {
+  return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
+}
+
+function getPlatformConfig(): PlatformConfig | null {
   const hostname = window.location.hostname;
   for (const domain in configs) {
     if (hostname.includes(domain)) {
-      return configs[domain].rules.filter((rule) => rule.enabled);
+      return configs[domain];
     }
   }
-  return [];
+  return null;
 }
 
-const activeRules = getActiveRules();
+const currentConfig = getPlatformConfig();
 
-// 1. Injeção preventiva de estilo para eliminar flicker
-function injectBlockingStyles(rules: Rule[]): void {
-  if (rules.length === 0) return;
+// Injeção ou atualização do bloco <style> no DOM
+function applyStyles(rules: Rule[], userOverrides: Record<string, boolean>): void {
+  const activeSelectors: string[] = [];
 
-  const css = rules
-    .map((rule) => `${rule.selector} { display: none !important; }`)
-    .join('\n');
-
-  const styleElement = document.createElement('style');
-  styleElement.id = 'arandu-injected-styles';
-  styleElement.textContent = css;
-
-  const target = document.head || document.documentElement;
-  if (target) {
-    target.appendChild(styleElement);
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      (document.head || document.documentElement).appendChild(styleElement);
-    });
+  for (const rule of rules) {
+    // A preferência do utilizador sobrepõe o default do JSON
+    const isEnabled = userOverrides[rule.id] !== undefined ? userOverrides[rule.id] : rule.enabled;
+    if (isEnabled) {
+      activeSelectors.push(`${rule.selector} { display: none !important; }`);
+    }
   }
+
+  let styleElement = document.getElementById('arandu-injected-styles') as HTMLStyleElement | null;
+  if (!styleElement) {
+    styleElement = document.createElement('style');
+    styleElement.id = 'arandu-injected-styles';
+    const target = document.head || document.documentElement;
+    if (target) {
+      target.appendChild(styleElement);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        (document.head || document.documentElement).appendChild(styleElement!);
+      });
+    }
+  }
+
+  styleElement.textContent = activeSelectors.join('\n');
 }
 
-// 2. Contabilização reativa de elementos interceptados
+// 2. Contabilização reativa de elementos contidos
 const interceptedNodes = new WeakSet<Node>();
 
-function auditDOM(rules: Rule[]): void {
+function auditDOM(rules: Rule[], userOverrides: Record<string, boolean>): void {
   let newBlockedCount = 0;
   let newSecondsSaved = 0;
 
   for (const rule of rules) {
+    const isEnabled = userOverrides[rule.id] !== undefined ? userOverrides[rule.id] : rule.enabled;
+    if (!isEnabled) continue;
+
     const nodes = document.querySelectorAll(rule.selector);
     nodes.forEach((node) => {
       if (!interceptedNodes.has(node)) {
@@ -81,33 +79,56 @@ function auditDOM(rules: Rule[]): void {
   }
 }
 
-// 3. Persistência local no motor do navegador (Local-First)
 function persistMetrics(count: number, seconds: number): void {
-  chrome.storage.local.get(['totalBlocked', 'totalSecondsSaved'], (data) => {
-    const currentBlocked = (data.totalBlocked as number) || 0;
-    const currentSeconds = (data.totalSecondsSaved as number) || 0;
+  if (!isContextValid()) return;
 
-    const totalBlocked = currentBlocked + count;
-    const totalSecondsSaved = currentSeconds + seconds;
+  try {
+    chrome.storage.local.get(['totalBlocked', 'totalSecondsSaved'], (data) => {
+      if (chrome.runtime.lastError || !isContextValid()) return;
 
-    chrome.storage.local.set({
-      totalBlocked,
-      totalSecondsSaved,
-      lastUpdated: new Date().toISOString(),
+      const currentBlocked = (data.totalBlocked as number) || 0;
+      const currentSeconds = (data.totalSecondsSaved as number) || 0;
+
+      chrome.storage.local.set({
+        totalBlocked: currentBlocked + count,
+        totalSecondsSaved: currentSeconds + seconds,
+        lastUpdated: new Date().toISOString(),
+      });
     });
-  });
+  } catch {
+    // Contexto descarregado
+  }
 }
 
-// Execução inicial imediata
-if (activeRules.length > 0) {
-  injectBlockingStyles(activeRules);
+// Inicialização principal
+if (currentConfig) {
+  // Injeção imediata preliminar com defaults (previne flicker antes de consultar o storage)
+  applyStyles(currentConfig.rules, {});
 
-  const observer = new MutationObserver(() => {
-    auditDOM(activeRules);
+  // Consulta as preferências gravadas e ajusta
+  chrome.storage.local.get(['rulePreferences'], (data) => {
+    const userOverrides = (data.rulePreferences as Record<string, boolean>) || {};
+    applyStyles(currentConfig.rules, userOverrides);
+
+    const observer = new MutationObserver(() => {
+      auditDOM(currentConfig.rules, userOverrides);
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Escuta alterações feitas pelo utilizador no Popup em tempo real
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.rulePreferences) {
+        const updatedOverrides = (changes.rulePreferences.newValue as Record<string, boolean>) || {};
+        applyStyles(currentConfig.rules, updatedOverrides);
+      }
+    });
   });
 
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-  });
+  // Ativa o cronómetro de atenção ativa
+  const tracker = new ActiveTabTracker(currentConfig.domain);
+  tracker.start();
 }
