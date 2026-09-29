@@ -1,10 +1,9 @@
 import { Rule, PlatformConfig } from '../types/rule';
 import youtubeData from '../rules/youtube.json';
-import { ActiveTabTracker } from './tracker';
 import instagramData from '../rules/instagram.json';
+import { ActiveTabTracker } from './tracker';
 
-
-// Inicia o rastreador apenas se estiver no YouTube ou Instagram
+// Inicia o rastreador de presença ativa para domínios suportados
 const hostname = window.location.hostname;
 let targetDomain = '';
 
