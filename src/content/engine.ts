@@ -24,12 +24,11 @@ function getPlatformConfig(): PlatformConfig | null {
 
 const currentConfig = getPlatformConfig();
 
-// Injeção ou atualização do bloco <style> no DOM
+// Injeta estilos CSS no nó raiz
 function applyStyles(rules: Rule[], userOverrides: Record<string, boolean>): void {
   const activeSelectors: string[] = [];
 
   for (const rule of rules) {
-    // A preferência do utilizador sobrepõe o default do JSON
     const isEnabled = userOverrides[rule.id] !== undefined ? userOverrides[rule.id] : rule.enabled;
     if (isEnabled) {
       activeSelectors.push(`${rule.selector} { display: none !important; }`);
@@ -53,7 +52,7 @@ function applyStyles(rules: Rule[], userOverrides: Record<string, boolean>): voi
   styleElement.textContent = activeSelectors.join('\n');
 }
 
-// 2. Contabilização reativa de elementos contidos
+// Contabilização segura com isolamento de erros de seletor
 const interceptedNodes = new WeakSet<Node>();
 
 function auditDOM(rules: Rule[], userOverrides: Record<string, boolean>): void {
@@ -64,14 +63,18 @@ function auditDOM(rules: Rule[], userOverrides: Record<string, boolean>): void {
     const isEnabled = userOverrides[rule.id] !== undefined ? userOverrides[rule.id] : rule.enabled;
     if (!isEnabled) continue;
 
-    const nodes = document.querySelectorAll(rule.selector);
-    nodes.forEach((node) => {
-      if (!interceptedNodes.has(node)) {
-        interceptedNodes.add(node);
-        newBlockedCount++;
-        newSecondsSaved += rule.weightSeconds;
-      }
-    });
+    try {
+      const nodes = document.querySelectorAll(rule.selector);
+      nodes.forEach((node) => {
+        if (!interceptedNodes.has(node)) {
+          interceptedNodes.add(node);
+          newBlockedCount++;
+          newSecondsSaved += rule.weightSeconds;
+        }
+      });
+    } catch {
+      // Ignora seletores que o navegador possa rejeitar temporariamente em mutações do DOM
+    }
   }
 
   if (newBlockedCount > 0) {
@@ -100,12 +103,42 @@ function persistMetrics(count: number, seconds: number): void {
   }
 }
 
+// Interceptador de navegação SPA seguro
+let previousUrl = window.location.href;
+
+function checkUrlAndIntercept(): void {
+  const currentUrl = window.location.href;
+  const path = window.location.pathname;
+
+  // Interceptação do YouTube Shorts
+  if (window.location.hostname.includes('youtube.com')) {
+    if (path.startsWith('/shorts/')) {
+      const videoId = path.split('/shorts/')[1]?.split(/[?&#]/)[0];
+      if (videoId) {
+        window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
+        return;
+      }
+    } else if (path === '/shorts' || path === '/shorts/') {
+      window.location.replace('https://www.youtube.com/');
+      return;
+    }
+  }
+
+  // Interceptação do Instagram Reels
+  if (window.location.hostname.includes('instagram.com')) {
+    if (path.startsWith('/reels/')) {
+      window.location.replace('https://www.instagram.com/');
+      return;
+    }
+  }
+
+  previousUrl = currentUrl;
+}
+
 // Inicialização principal
 if (currentConfig) {
-  // Injeção imediata preliminar com defaults (previne flicker antes de consultar o storage)
   applyStyles(currentConfig.rules, {});
 
-  // Consulta as preferências gravadas e ajusta
   chrome.storage.local.get(['rulePreferences'], (data) => {
     const userOverrides = (data.rulePreferences as Record<string, boolean>) || {};
     applyStyles(currentConfig.rules, userOverrides);
@@ -119,7 +152,6 @@ if (currentConfig) {
       subtree: true,
     });
 
-    // Escuta alterações feitas pelo utilizador no Popup em tempo real
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'local' && changes.rulePreferences) {
         const updatedOverrides = (changes.rulePreferences.newValue as Record<string, boolean>) || {};
@@ -128,56 +160,11 @@ if (currentConfig) {
     });
   });
 
-  // Ativa o cronómetro de atenção ativa
+  checkUrlAndIntercept();
+  window.addEventListener('popstate', checkUrlAndIntercept);
+  window.addEventListener('yt-navigate-finish', checkUrlAndIntercept);
+  setInterval(checkUrlAndIntercept, 600);
+
   const tracker = new ActiveTabTracker(currentConfig.domain);
   tracker.start();
 }
-
-// Intercepta URLs do YouTube Shorts e Instagram Reels
-function interceptDistractionUrls(): void {
-  const hostname = window.location.hostname;
-  const path = window.location.pathname;
-
-  // 1. YouTube Shorts
-  if (hostname.includes('youtube.com')) {
-    if (path.startsWith('/shorts/')) {
-      const videoId = path.split('/shorts/')[1]?.split(/[?&#]/)[0];
-      if (videoId) {
-        window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
-      } else {
-        window.location.replace('https://www.youtube.com/');
-      }
-    } else if (path === '/shorts' || path === '/shorts/') {
-      window.location.replace('https://www.youtube.com/');
-    }
-  }
-
-  // 2. Instagram Reels (loop infinito)
-  if (hostname.includes('instagram.com')) {
-    if (path.startsWith('/reels/')) {
-      window.location.replace('https://www.instagram.com/');
-    }
-  }
-}
-
-// Monkeypatch do history.pushState para SPAs sem recarregamento
-function listenSpaNavigation(callback: () => void): void {
-  const originalPushState = history.pushState;
-  history.pushState = function (...args) {
-    originalPushState.apply(this, args);
-    callback();
-  };
-
-  const originalReplaceState = history.replaceState;
-  history.replaceState = function (...args) {
-    originalReplaceState.apply(this, args);
-    callback();
-  };
-
-  window.addEventListener('popstate', callback);
-  window.addEventListener('yt-navigate-finish', callback);
-}
-
-// Execução imediata
-interceptDistractionUrls();
-listenSpaNavigation(interceptDistractionUrls);

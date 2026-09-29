@@ -31,14 +31,16 @@ export class ActiveTabTracker {
   public stop(): void {
     if (!this.isTracking) return;
 
-    this.tick();
-    this.flushToStorage();
+    // Desativa a flag imediatamente para prevenir chamadas recursivas
+    this.isTracking = false;
 
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    this.isTracking = false;
+
+    this.tick();
+    this.flushToStorage();
   }
 
   private tick(): void {
@@ -92,8 +94,13 @@ export class ActiveTabTracker {
     });
   }
 
-  private flushToStorage(): void {
+    private flushToStorage(): void {
     if (this.accumulatedBufferSeconds <= 0) return;
+
+    if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+      this.isTracking = false;
+      return;
+    }
 
     const secondsToAdd = this.accumulatedBufferSeconds;
     this.accumulatedBufferSeconds = 0;
@@ -101,13 +108,20 @@ export class ActiveTabTracker {
     const today = new Date().toISOString().split('T')[0];
     const storageKey = `activeTime_${this.domain}`;
 
-    chrome.storage.local.get([storageKey], (result) => {
-      const dailyData: DailyUsageMap = (result[storageKey] as DailyUsageMap) || {};
-      const currentSeconds = dailyData[today] || 0;
+    try {
+      chrome.storage.local.get([storageKey], (result) => {
+        if (chrome.runtime.lastError || !chrome.runtime?.id) return;
 
-      dailyData[today] = currentSeconds + secondsToAdd;
+        const dailyData: DailyUsageMap = (result[storageKey] as DailyUsageMap) || {};
+        const currentSeconds = dailyData[today] || 0;
 
-      chrome.storage.local.set({ [storageKey]: dailyData });
-    });
+        dailyData[today] = currentSeconds + secondsToAdd;
+
+        chrome.storage.local.set({ [storageKey]: dailyData });
+      });
+    } catch {
+      // Finalização silenciosa sem reentrar em stop()
+      this.isTracking = false;
+    }
   }
 }
