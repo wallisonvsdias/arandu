@@ -11,12 +11,12 @@
       "enabled": true
     },
     {
-      "id": "yt-shorts",
-      "name": "Shorts (Carrosséis e Menu)",
-      "description": "Remove carrosséis de vídeos curtos do feed e o atalho na barra lateral",
-      "selector": "ytd-rich-shelf-renderer[is-shorts], ytd-reel-shelf-renderer, ytd-guide-entry-renderer:has(a[title='Shorts']), ytd-mini-guide-entry-renderer[aria-label='Shorts']",
-      "weightSeconds": 45,
-      "enabled": true
+    "id": "yt-shorts",
+    "name": "Shorts (Carrosséis e Menus)",
+    "description": "Remove carrosséis de vídeos curtos do feed e botões na barra lateral normal e colapsada",
+    "selector": "ytd-rich-shelf-renderer[is-shorts], ytd-reel-shelf-renderer, ytd-guide-entry-renderer:has(a[href^='/shorts']), ytd-mini-guide-entry-renderer:has(a[href^='/shorts']), ytd-mini-guide-entry-renderer[aria-label*='Shorts'], ytm-pivot-bar-item-renderer:has(a[href^='/shorts'])",
+    "weightSeconds": 45,
+    "enabled": true
     },
     {
       "id": "yt-related-videos",

@@ -132,3 +132,29 @@ if (currentConfig) {
   const tracker = new ActiveTabTracker(currentConfig.domain);
   tracker.start();
 }
+
+// Intercepta e converte URLs do Shorts para o player convencional ou tela inicial
+function interceptShortsNavigation(): void {
+  if (!window.location.hostname.includes('youtube.com')) return;
+
+  const path = window.location.pathname;
+
+  if (path.startsWith('/shorts/')) {
+    const videoId = path.split('/shorts/')[1]?.split(/[?&#]/)[0];
+    if (videoId) {
+      // Redireciona para o player tradicional de vídeo (elimina a rolagem infinita)
+      window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
+    } else {
+      window.location.replace('https://www.youtube.com/');
+    }
+  } else if (path === '/shorts' || path === '/shorts/') {
+    window.location.replace('https://www.youtube.com/');
+  }
+}
+
+// Executa na carga inicial imediata (document_start)
+interceptShortsNavigation();
+
+// Escuta a navegação interna assíncrona do próprio YouTube (SPA)
+window.addEventListener('yt-navigate-finish', interceptShortsNavigation);
+window.addEventListener('popstate', interceptShortsNavigation);
