@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "url": "https://www.instagram.com/?variant=following"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://(www\\.)?instagram\\.com/?$",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  }
+]
